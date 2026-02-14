@@ -1,0 +1,1677 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MegaNames Checker</title>
+  <style>
+    /* ── Reset & Base ──────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:        #0a0a0b;
+      --bg-card:   #111113;
+      --bg-hover:  #18181b;
+      --surface:   #1c1c1f;
+      --border:    #27272a;
+      --border-lt: #333338;
+      --fg:        #fafafa;
+      --muted:     #71717a;
+      --muted-dk:  #a1a1aa;
+      --green:     #22c55e;
+      --green-bg:  #052e16;
+      --green-br:  #14532d;
+      --red:       #ef4444;
+      --red-bg:    #2a0a0a;
+      --red-br:    #7f1d1d;
+      --yellow:    #eab308;
+      --yellow-bg: #1a1a00;
+      --yellow-br: #713f12;
+      --cyan:      #06b6d4;
+      --purple:    #a78bfa;
+      --radius:    8px;
+      --font:      'SF Mono', 'Cascadia Code', 'JetBrains Mono', 'Fira Code', Consolas, monospace;
+    }
+
+    body {
+      font-family: var(--font);
+      background: var(--bg);
+      color: var(--fg);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 0;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* ── Layout ────────────────────────────────────── */
+    .app {
+      width: 100%;
+      max-width: 860px;
+      padding: 24px 20px 60px;
+    }
+
+    /* ── Header ────────────────────────────────────── */
+    .header {
+      text-align: center;
+      padding: 48px 0 36px;
+    }
+    .header-label {
+      font-size: 0.95rem;
+      letter-spacing: 0.25em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 16px;
+    }
+    .header h1 {
+      font-size: clamp(2.5rem, 6vw, 4.5rem);
+      font-weight: 800;
+      line-height: 0.85;
+      letter-spacing: -0.03em;
+      color: var(--fg);
+    }
+    .header h2 {
+      font-size: clamp(1.5rem, 4vw, 2.8rem);
+      font-weight: 800;
+      line-height: 0.9;
+      color: var(--muted);
+      margin-bottom: 16px;
+    }
+    .header-sub {
+      font-size: 0.85rem;
+      color: var(--muted-dk);
+      max-width: 480px;
+      margin: 0 auto;
+      line-height: 1.6;
+    }
+    .header-sub a {
+      color: var(--cyan);
+      text-decoration: none;
+      font-weight: 600;
+      transition: all 0.2s;
+    }
+    .header-sub a:hover {
+      text-decoration: underline;
+      color: #0891b2;
+    }
+
+    /* ── Search Area ───────────────────────────────── */
+    .search-section {
+      margin-top: 32px;
+    }
+    .search-box {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 24px;
+      transition: all 0.3s ease;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+    }
+    .search-box:focus-within {
+      border-color: var(--cyan);
+      box-shadow: 0 0 0 3px rgba(6, 182, 212, 0.1);
+    }
+    .search-box label {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.7rem;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--muted-dk);
+      margin-bottom: 14px;
+      font-weight: 600;
+    }
+    .search-input-row {
+      display: flex;
+      gap: 8px;
+    }
+    .search-textarea {
+      flex: 1;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      color: var(--fg);
+      font-family: var(--font);
+      font-size: 0.95rem;
+      padding: 14px 16px;
+      resize: vertical;
+      min-height: 60px;
+      max-height: 200px;
+      outline: none;
+      transition: all 0.2s ease;
+      line-height: 1.6;
+    }
+    .search-textarea::placeholder {
+      color: var(--muted);
+      opacity: 0.6;
+    }
+    .search-textarea:focus {
+      border-color: var(--cyan);
+      background: var(--bg-card);
+      box-shadow: 0 0 0 3px rgba(6, 182, 212, 0.05);
+    }
+    .search-textarea.has-content {
+      border-color: var(--border-lt);
+    }
+
+    .btn-check {
+      background: linear-gradient(135deg, var(--cyan) 0%, #0891b2 100%);
+      color: #fff;
+      border: none;
+      border-radius: 6px;
+      padding: 14px 32px;
+      font-family: var(--font);
+      font-size: 0.9rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      white-space: nowrap;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      box-shadow: 0 4px 12px rgba(6, 182, 212, 0.3);
+      position: relative;
+      overflow: hidden;
+    }
+    .btn-check::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+      transition: left 0.5s;
+    }
+    .btn-check:hover::before {
+      left: 100%;
+    }
+    .btn-check:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(6, 182, 212, 0.4);
+    }
+    .btn-check:active {
+      transform: translateY(0);
+      box-shadow: 0 2px 8px rgba(6, 182, 212, 0.3);
+    }
+    .btn-check:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+      transform: none;
+      box-shadow: none;
+    }
+    .btn-check .spinner {
+      width: 16px;
+      height: 16px;
+      border: 2px solid var(--bg);
+      border-top-color: transparent;
+      border-radius: 50%;
+      animation: spin 0.6s linear infinite;
+      display: none;
+    }
+    .btn-check.loading .spinner { display: block; }
+
+    .btn-group {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      flex-shrink: 0;
+    }
+    .btn-generate-inline {
+      background: rgba(167, 139, 250, 0.12);
+      color: var(--purple);
+      border: 1px solid rgba(167, 139, 250, 0.3);
+      border-radius: 6px;
+      padding: 9px 16px;
+      font-family: var(--font);
+      font-size: 0.75rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.15s;
+      white-space: nowrap;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      width: 100%;
+    }
+    .btn-generate-inline svg { width: 14px; height: 14px; }
+    .btn-generate-inline:hover {
+      background: rgba(167, 139, 250, 0.22);
+      border-color: var(--purple);
+      transform: translateY(-1px);
+    }
+    .btn-generate-inline:active { transform: translateY(0); }
+    .btn-generate-inline.active {
+      background: rgba(167, 139, 250, 0.25);
+      border-color: var(--purple);
+    }
+    .btn-check.loading .btn-text { display: none; }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .search-hints {
+      display: flex;
+      gap: 16px;
+      margin-top: 14px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+    .search-hint {
+      font-size: 0.72rem;
+      color: var(--muted);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .search-hint::before {
+      content: '•';
+      color: var(--cyan);
+      font-weight: bold;
+    }
+    .char-counter {
+      font-size: 0.72rem;
+      color: var(--muted-dk);
+      margin-left: auto;
+      padding: 4px 10px;
+      background: var(--surface);
+      border-radius: 4px;
+      font-weight: 600;
+    }
+    .char-counter.warning {
+      color: var(--yellow);
+    }
+    .char-counter.error {
+      color: var(--red);
+    }
+
+    /* ── Quick Examples ────────────────────────────── */
+    .examples {
+      margin-top: 12px;
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+    .examples-label {
+      font-size: 0.65rem;
+      color: var(--muted);
+      letter-spacing: 0.1em;
+    }
+    .example-chip {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 5px;
+      padding: 6px 12px;
+      font-size: 0.75rem;
+      color: var(--muted-dk);
+      cursor: pointer;
+      transition: all 0.2s ease;
+      user-select: none;
+      font-weight: 500;
+    }
+    .example-chip:hover {
+      border-color: var(--cyan);
+      color: var(--cyan);
+      background: var(--bg-hover);
+      transform: translateY(-2px);
+      box-shadow: 0 4px 8px rgba(6, 182, 212, 0.2);
+    }
+    .example-chip:active {
+      transform: translateY(0);
+    }
+
+    /* ── Results ───────────────────────────────────── */
+    .results-section {
+      margin-top: 40px;
+      display: none;
+      opacity: 0;
+      transform: translateY(20px);
+      transition: all 0.4s ease;
+    }
+    .results-section.visible {
+      display: block;
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 60px 20px;
+      color: var(--muted);
+    }
+    .empty-state-icon {
+      font-size: 3rem;
+      margin-bottom: 16px;
+      opacity: 0.3;
+    }
+    .empty-state-text {
+      font-size: 0.9rem;
+      line-height: 1.6;
+    }
+
+    /* Summary Bar */
+    .summary-bar {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+      gap: 10px;
+      margin-bottom: 24px;
+      animation: slideInUp 0.5s ease;
+    }
+    @keyframes slideInUp {
+      from {
+        opacity: 0;
+        transform: translateY(20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+    .summary-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 18px 16px;
+      text-align: center;
+      transition: all 0.2s ease;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    .summary-card:hover {
+      transform: translateY(-2px);
+      border-color: var(--border-lt);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+    }
+    .summary-card .label {
+      font-size: 0.6rem;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 4px;
+    }
+    .summary-card .value {
+      font-size: 1.4rem;
+      font-weight: 700;
+    }
+    .summary-card .value.green  { color: var(--green); }
+    .summary-card .value.red    { color: var(--red); }
+    .summary-card .value.yellow { color: var(--yellow); }
+    .summary-card .value.cyan   { color: var(--cyan); }
+
+    /* Filter Tabs */
+    .filter-tabs {
+      display: flex;
+      gap: 6px;
+      margin-bottom: 16px;
+      background: var(--surface);
+      border-radius: 8px;
+      padding: 4px;
+      width: fit-content;
+      border: 1px solid var(--border);
+    }
+    .filter-tab {
+      background: none;
+      border: none;
+      color: var(--muted);
+      font-family: var(--font);
+      font-size: 0.75rem;
+      padding: 8px 16px;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      font-weight: 600;
+      position: relative;
+    }
+    .filter-tab:hover {
+      color: var(--fg);
+      background: rgba(255, 255, 255, 0.02);
+    }
+    .filter-tab.active {
+      background: var(--cyan);
+      color: #fff;
+      box-shadow: 0 2px 8px rgba(6, 182, 212, 0.3);
+    }
+
+    /* Results List */
+    .results-list {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .result-row {
+      display: grid;
+      grid-template-columns: 32px 1fr auto;
+      align-items: center;
+      gap: 14px;
+      padding: 16px 18px;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      transition: all 0.2s ease;
+      animation: fadeInUp 0.3s ease forwards;
+      opacity: 0;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+    .result-row:hover {
+      border-color: var(--cyan);
+      background: var(--bg-hover);
+      transform: translateX(4px);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    }
+
+    @keyframes fadeInUp {
+      from { opacity: 0; transform: translateY(8px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .result-icon {
+      width: 28px;
+      height: 28px;
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.85rem;
+      font-weight: 700;
+    }
+    .result-icon.available {
+      background: var(--green-bg);
+      border: 1px solid var(--green-br);
+      color: var(--green);
+    }
+    .result-icon.taken {
+      background: var(--red-bg);
+      border: 1px solid var(--red-br);
+      color: var(--red);
+    }
+    .result-icon.grace {
+      background: var(--yellow-bg);
+      border: 1px solid var(--yellow-br);
+      color: var(--yellow);
+    }
+    .result-icon.invalid {
+      background: var(--yellow-bg);
+      border: 1px solid var(--yellow-br);
+      color: var(--yellow);
+    }
+    .result-icon.expired {
+      background: var(--green-bg);
+      border: 1px solid var(--green-br);
+      color: var(--green);
+    }
+
+    .result-info { min-width: 0; }
+    .result-name {
+      font-size: 0.95rem;
+      font-weight: 600;
+      color: var(--fg);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .result-name .tld { color: var(--muted); font-weight: 400; }
+    .result-meta {
+      font-size: 0.7rem;
+      color: var(--muted);
+      margin-top: 2px;
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    .result-meta span { white-space: nowrap; }
+
+    .result-badge {
+      font-size: 0.68rem;
+      font-weight: 600;
+      letter-spacing: 0.05em;
+      padding: 4px 10px;
+      border-radius: 4px;
+      white-space: nowrap;
+    }
+    .badge-available {
+      background: var(--green-bg);
+      border: 1px solid var(--green-br);
+      color: var(--green);
+    }
+    .badge-taken {
+      background: var(--red-bg);
+      border: 1px solid var(--red-br);
+      color: var(--red);
+    }
+    .badge-grace {
+      background: var(--yellow-bg);
+      border: 1px solid var(--yellow-br);
+      color: var(--yellow);
+    }
+    .badge-invalid {
+      background: var(--yellow-bg);
+      border: 1px solid var(--yellow-br);
+      color: var(--yellow);
+    }
+    .badge-expired {
+      background: var(--green-bg);
+      border: 1px solid var(--green-br);
+      color: var(--green);
+    }
+
+    .result-right {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .result-price {
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: var(--cyan);
+      white-space: nowrap;
+    }
+    .btn-mint {
+      background: var(--green);
+      color: #fff;
+      border: none;
+      border-radius: 5px;
+      padding: 5px 14px;
+      font-family: var(--font);
+      font-size: 0.7rem;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      cursor: pointer;
+      text-decoration: none;
+      white-space: nowrap;
+      transition: all 0.15s;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+    }
+    .btn-mint:hover {
+      background: #16a34a;
+      transform: translateY(-1px);
+      box-shadow: 0 2px 8px rgba(34,197,94,0.3);
+    }
+    .btn-mint:active { transform: translateY(0); }
+    .btn-mint svg { width: 12px; height: 12px; }
+
+    /* ── Pricing Table ─────────────────────────────── */
+    .pricing-section {
+      margin-top: 48px;
+      text-align: center;
+    }
+    .pricing-label {
+      font-size: 0.7rem;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 20px;
+      font-weight: 600;
+    }
+    .pricing-grid {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 8px;
+    }
+    .pricing-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 20px 10px;
+      text-align: center;
+      transition: all 0.2s ease;
+      cursor: default;
+    }
+    .pricing-card:hover {
+      border-color: var(--cyan);
+      transform: translateY(-3px);
+      box-shadow: 0 6px 16px rgba(6, 182, 212, 0.2);
+    }
+    .pricing-card .chars {
+      font-size: 0.65rem;
+      color: var(--muted);
+      letter-spacing: 0.1em;
+      margin-bottom: 8px;
+      text-transform: uppercase;
+    }
+    .pricing-card .price {
+      font-size: 1.3rem;
+      font-weight: 700;
+      color: var(--fg);
+    }
+    .pricing-card:first-child .price,
+    .pricing-card:nth-child(2) .price {
+      color: var(--cyan);
+    }
+
+    /* ── Footer ────────────────────────────────────── */
+    .footer {
+      margin-top: 48px;
+      padding: 20px 0;
+      border-top: 1px solid var(--border);
+      text-align: center;
+    }
+    .footer p {
+      font-size: 0.65rem;
+      color: var(--muted);
+    }
+    .footer a {
+      color: var(--muted-dk);
+      text-decoration: none;
+    }
+    .footer a:hover { color: var(--fg); text-decoration: underline; }
+
+    /* ── Status indicator ──────────────────────────── */
+    .status-dot {
+      display: inline-block;
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      margin-right: 8px;
+      background: var(--muted);
+      transition: all 0.3s ease;
+      box-shadow: 0 0 0 0 rgba(113, 113, 122, 0.4);
+    }
+    .status-dot.connected {
+      background: var(--green);
+      animation: pulse 2s infinite;
+    }
+    .status-dot.error {
+      background: var(--red);
+      animation: pulse-error 1s infinite;
+    }
+    @keyframes pulse {
+      0%, 100% {
+        box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.7);
+      }
+      50% {
+        box-shadow: 0 0 0 6px rgba(34, 197, 94, 0);
+      }
+    }
+    @keyframes pulse-error {
+      0%, 100% {
+        box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7);
+      }
+      50% {
+        box-shadow: 0 0 0 6px rgba(239, 68, 68, 0);
+      }
+    }
+
+    /* ── Toast / Error ─────────────────────────────── */
+    .toast {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      background: var(--red-bg);
+      border: 1px solid var(--red-br);
+      color: var(--red);
+      padding: 16px 24px;
+      border-radius: var(--radius);
+      font-size: 0.85rem;
+      z-index: 100;
+      animation: slideInRight 0.3s ease;
+      max-width: 420px;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+      backdrop-filter: blur(10px);
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .toast.success {
+      background: var(--green-bg);
+      border-color: var(--green-br);
+      color: var(--green);
+    }
+    .toast::before {
+      content: '⚠';
+      font-size: 1.2rem;
+    }
+    .toast.success::before {
+      content: '✓';
+    }
+    @keyframes slideInRight {
+      from {
+        opacity: 0;
+        transform: translateX(100px);
+      }
+      to {
+        opacity: 1;
+        transform: translateX(0);
+      }
+    }
+
+    /* ── Generator Section ─────────────────────────── */
+    .gen-section {
+      margin-top: 8px;
+    }
+
+    .gen-panel {
+      display: none;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 20px;
+      margin-top: 4px;
+      animation: fadeInUp 0.2s ease;
+    }
+    .gen-panel.open { display: block; }
+
+    .gen-row {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 14px;
+      flex-wrap: wrap;
+      align-items: flex-end;
+    }
+    .gen-field {
+      flex: 1;
+      min-width: 140px;
+    }
+    .gen-field label {
+      display: block;
+      font-size: 0.6rem;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 6px;
+    }
+    .gen-select, .gen-input-sm {
+      width: 100%;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 5px;
+      color: var(--fg);
+      font-family: var(--font);
+      font-size: 0.78rem;
+      padding: 8px 10px;
+      outline: none;
+      appearance: none;
+      -webkit-appearance: none;
+      cursor: pointer;
+    }
+    .gen-select { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2371717a' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 10px center; padding-right: 28px; }
+    .gen-select:focus, .gen-input-sm:focus { border-color: var(--purple); }
+
+    .gen-categories {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 5px;
+      margin-bottom: 14px;
+    }
+    .gen-cat {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 5px 12px;
+      font-size: 0.68rem;
+      font-family: var(--font);
+      color: var(--muted-dk);
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .gen-cat:hover { border-color: var(--muted); color: var(--fg); }
+    .gen-cat.active {
+      background: rgba(167, 139, 250, 0.1);
+      border-color: var(--purple);
+      color: var(--purple);
+    }
+
+    .gen-actions {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    .btn-generate {
+      background: var(--purple);
+      color: #fff;
+      border: none;
+      border-radius: 6px;
+      padding: 9px 18px;
+      font-family: var(--font);
+      font-size: 0.78rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.15s;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .btn-generate:hover { opacity: 0.85; transform: translateY(-1px); }
+    .btn-generate:active { transform: translateY(0); }
+    .btn-generate-alt {
+      background: transparent;
+      color: var(--purple);
+      border: 1px solid var(--purple);
+      border-radius: 6px;
+      padding: 9px 18px;
+      font-family: var(--font);
+      font-size: 0.78rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .btn-generate-alt:hover { background: rgba(167, 139, 250, 0.08); }
+
+    .gen-preview {
+      margin-top: 12px;
+      padding: 10px 14px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      font-size: 0.75rem;
+      color: var(--muted-dk);
+      line-height: 1.6;
+      max-height: 120px;
+      overflow-y: auto;
+      display: none;
+      word-break: break-all;
+    }
+    .gen-preview.visible { display: block; }
+    .gen-preview .gen-name {
+      display: inline-block;
+      background: rgba(167, 139, 250, 0.08);
+      border: 1px solid rgba(167, 139, 250, 0.15);
+      border-radius: 3px;
+      padding: 1px 7px;
+      margin: 2px 3px;
+      font-size: 0.72rem;
+      color: var(--purple);
+    }
+    .gen-count {
+      font-size: 0.65rem;
+      color: var(--muted);
+      margin-top: 6px;
+    }
+
+    /* ── Loading Skeleton ──────────────────────────── */
+    .skeleton {
+      background: linear-gradient(90deg, var(--surface) 25%, var(--bg-hover) 50%, var(--surface) 75%);
+      background-size: 200% 100%;
+      animation: shimmer 1.5s infinite;
+      border-radius: 4px;
+    }
+    @keyframes shimmer {
+      0% { background-position: 200% 0; }
+      100% { background-position: -200% 0; }
+    }
+    .loading-skeleton {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .skeleton-row {
+      height: 72px;
+      border-radius: var(--radius);
+    }
+
+    /* ── Responsive ────────────────────────────────── */
+    @media (max-width: 768px) {
+      .result-row {
+        grid-template-columns: 28px 1fr;
+        gap: 10px;
+      }
+      .result-right {
+        grid-column: 2;
+        justify-content: flex-start;
+        margin-top: 8px;
+        flex-wrap: wrap;
+      }
+    }
+
+    @media (max-width: 600px) {
+      .app { padding: 16px 12px 40px; }
+      .header { padding: 32px 0 24px; }
+      .header h1 { font-size: 2.5rem; }
+      .header h2 { font-size: 1.8rem; }
+      .pricing-grid { grid-template-columns: repeat(2, 1fr); }
+      .summary-bar { grid-template-columns: 1fr 1fr; }
+      .search-input-row { flex-direction: column; }
+      .btn-check {
+        width: 100%;
+        justify-content: center;
+        padding: 16px 32px;
+      }
+      .gen-row { flex-direction: column; }
+      .gen-field { min-width: 100%; }
+      .search-hints {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
+      }
+      .char-counter {
+        margin-left: 0;
+      }
+      .toast {
+        left: 12px;
+        right: 12px;
+        bottom: 12px;
+        max-width: none;
+      }
+    }
+  </style>
+</head>
+<body>
+
+<div class="app">
+  <!-- Header -->
+  <header class="header">
+    <p class="header-label">vibe coded by <a href="https://x.com/PRIS0NER" target="_blank" rel="noopener" style="color:var(--cyan);text-decoration:none;font-weight:700;transition:all 0.2s;border-bottom:1px solid rgba(6,182,212,0.3);">prisoner</a></p>
+    <h1>MEGA NAME</h1>
+    <h2>CHECKER</h2>
+    <p class="header-sub">
+      Check availability of <strong>.mega</strong> domains on MegaETH.
+      Powered by <a href="https://meganame.market" target="_blank">meganame.market</a>
+    </p>
+  </header>
+
+  <!-- Search -->
+  <section class="search-section">
+    <div class="search-box">
+      <label>
+        <span class="status-dot" id="statusDot" title="Checking connection..."></span>
+        <span>Enter names to check</span>
+      </label>
+      <div class="search-input-row">
+        <textarea
+          class="search-textarea"
+          id="namesInput"
+          placeholder="bread, fluffy, megaeth, vitalik, crypto..."
+          rows="2"
+          oninput="updateCharCounter()"
+        ></textarea>
+        <div class="btn-group">
+          <button class="btn-generate-inline" id="genBtn" onclick="toggleGenerator()" title="Auto-generate crypto/defi names">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/></svg>
+            <span>Generate</span>
+          </button>
+          <button class="btn-check" id="checkBtn" onclick="checkNames()">
+            <span class="btn-text">Check</span>
+            <div class="spinner"></div>
+          </button>
+        </div>
+      </div>
+      <div class="search-hints">
+        <span class="search-hint">Max 500 names per check</span>
+        <span class="search-hint">Allowed: a-z, 0-9, hyphens</span>
+        <span class="char-counter" id="charCounter">0 names</span>
+      </div>
+      <div class="examples">
+        <span class="examples-label">Try:</span>
+        <span class="example-chip" onclick="fillExample('bread, fluffy, megaeth, vitalik, crypto')">popular</span>
+        <span class="example-chip" onclick="fillExample('btc, eth, sol, avax, bnb, matic, dot, atom')">tokens</span>
+        <span class="example-chip" onclick="fillExample('ai, nft, defi, web3, dao, degen, gm, wagmi')">web3</span>
+        <span class="example-chip" onclick="fillExample('a, b, c, x, y, z, 0, 1, 9')">1-char ($1000)</span>
+      </div>
+    </div>
+
+    <!-- Name Generator Panel -->
+    <div class="gen-section">
+      <div class="gen-panel" id="genPanel">
+        <!-- Categories -->
+        <div style="margin-bottom:10px">
+          <label style="display:block;font-size:0.6rem;letter-spacing:0.15em;text-transform:uppercase;color:var(--muted);margin-bottom:8px;">Categories (click multiple)</label>
+          <div class="gen-categories" id="genCategories">
+            <button class="gen-cat active" data-cat="defi" onclick="toggleCat(this)">DeFi</button>
+            <button class="gen-cat active" data-cat="tokens" onclick="toggleCat(this)">Tokens</button>
+            <button class="gen-cat" data-cat="chains" onclick="toggleCat(this)">Chains</button>
+            <button class="gen-cat" data-cat="trading" onclick="toggleCat(this)">Trading</button>
+            <button class="gen-cat" data-cat="nft" onclick="toggleCat(this)">NFT / Gaming</button>
+            <button class="gen-cat" data-cat="meme" onclick="toggleCat(this)">Meme / Culture</button>
+            <button class="gen-cat" data-cat="tech" onclick="toggleCat(this)">Tech / AI</button>
+            <button class="gen-cat" data-cat="finance" onclick="toggleCat(this)">TradFi</button>
+          </div>
+        </div>
+
+        <!-- Options Row -->
+        <div class="gen-row">
+          <div class="gen-field">
+            <label>Style</label>
+            <select class="gen-select" id="genStyle">
+              <option value="mixed">Mixed (all styles)</option>
+              <option value="single">Single words</option>
+              <option value="compound">Compound (defiswap)</option>
+              <option value="prefix">Prefix + word (megavault)</option>
+              <option value="suffix">Word + suffix (swapfi)</option>
+              <option value="numbered">With numbers (defi3)</option>
+              <option value="short">Short only (2-4 chars)</option>
+            </select>
+          </div>
+          <div class="gen-field">
+            <label>How many</label>
+            <select class="gen-select" id="genCount">
+              <option value="20">20 names</option>
+              <option value="50" selected>50 names</option>
+              <option value="100">100 names</option>
+              <option value="200">200 names</option>
+              <option value="500">500 names (max)</option>
+            </select>
+          </div>
+          <div class="gen-field">
+            <label>Max length</label>
+            <select class="gen-select" id="genMaxLen">
+              <option value="4">4 chars ($10+)</option>
+              <option value="6">6 chars</option>
+              <option value="10" selected>10 chars</option>
+              <option value="15">15 chars</option>
+              <option value="255">No limit</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Actions -->
+        <div class="gen-actions">
+          <button class="btn-generate" onclick="generateNames()">
+            <span>&#9881;</span> Generate
+          </button>
+          <button class="btn-generate-alt" onclick="generateAndCheck()">
+            Generate &amp; Check
+          </button>
+          <button class="btn-generate-alt" onclick="clearGenerator()">
+            Clear
+          </button>
+        </div>
+
+        <!-- Preview -->
+        <div class="gen-preview" id="genPreview"></div>
+        <div class="gen-count" id="genCount2"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Results -->
+  <section class="results-section" id="resultsSection">
+    <!-- Summary -->
+    <div class="summary-bar" id="summaryBar"></div>
+
+    <!-- Filters -->
+    <div class="filter-tabs" id="filterTabs">
+      <button class="filter-tab active" data-filter="all" onclick="filterResults('all', this)">All</button>
+      <button class="filter-tab" data-filter="available" onclick="filterResults('available', this)">Available</button>
+      <button class="filter-tab" data-filter="taken" onclick="filterResults('taken', this)">Taken</button>
+    </div>
+
+    <!-- Results List -->
+    <div class="results-list" id="resultsList"></div>
+  </section>
+
+  <!-- Pricing -->
+  <section class="pricing-section">
+    <p class="pricing-label">pricing / year</p>
+    <div class="pricing-grid">
+      <div class="pricing-card">
+        <div class="chars">1 char</div>
+        <div class="price">$1,000</div>
+      </div>
+      <div class="pricing-card">
+        <div class="chars">2 char</div>
+        <div class="price">$500</div>
+      </div>
+      <div class="pricing-card">
+        <div class="chars">3 char</div>
+        <div class="price">$100</div>
+      </div>
+      <div class="pricing-card">
+        <div class="chars">4 char</div>
+        <div class="price">$10</div>
+      </div>
+      <div class="pricing-card">
+        <div class="chars">5+ char</div>
+        <div class="price">$1</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <p>
+      <a href="https://meganame.market" target="_blank">meganame.market</a> &middot;
+      MegaETH Chain ID 4326 &middot;
+      Contract: <a href="https://mega.etherscan.io/address/0x5B424C6CCba77b32b9625a6fd5A30D409d20d997" target="_blank">0x5B42...d997</a>
+    </p>
+  </footer>
+</div>
+
+<script>
+// ── State ─────────────────────────────────────────────
+let allResults = [];
+let currentFilter = 'all';
+
+// ── Connection check ──────────────────────────────────
+async function checkConnection() {
+  const dot = document.getElementById('statusDot');
+  try {
+    const res = await fetch('/api/health');
+    const data = await res.json();
+    dot.className = 'status-dot ' + (data.connected ? 'connected' : 'error');
+    dot.title = data.connected ? `Connected to MegaETH (Block: ${data.block})` : 'Connection error';
+  } catch {
+    dot.className = 'status-dot error';
+    dot.title = 'Connection error';
+  }
+}
+checkConnection();
+
+// ── Character counter ─────────────────────────────────
+function updateCharCounter() {
+  const input = document.getElementById('namesInput');
+  const counter = document.getElementById('charCounter');
+  const value = input.value.trim();
+
+  // Add visual feedback
+  if (value) {
+    input.classList.add('has-content');
+  } else {
+    input.classList.remove('has-content');
+  }
+
+  if (!value) {
+    counter.textContent = '0 names';
+    counter.className = 'char-counter';
+    return;
+  }
+
+  const names = value.split(/[,\s\n]+/).filter(n => n.trim());
+  const count = names.length;
+
+  counter.textContent = `${count} name${count !== 1 ? 's' : ''}`;
+
+  if (count > 500) {
+    counter.className = 'char-counter error';
+  } else if (count > 400) {
+    counter.className = 'char-counter warning';
+  } else {
+    counter.className = 'char-counter';
+  }
+}
+
+// ── Fill example ──────────────────────────────────────
+function fillExample(text) {
+  const input = document.getElementById('namesInput');
+  input.value = text;
+  input.focus();
+  updateCharCounter();
+
+  // Add visual feedback
+  input.style.transition = 'all 0.3s ease';
+  input.style.transform = 'scale(1.02)';
+  input.style.borderColor = 'var(--cyan)';
+  setTimeout(() => {
+    input.style.transform = 'scale(1)';
+    input.style.borderColor = '';
+  }, 300);
+}
+
+// ── Main check function ──────────────────────────────
+async function checkNames() {
+  const input = document.getElementById('namesInput').value.trim();
+  if (!input) {
+    showToast('Please enter at least one name to check', true);
+    document.getElementById('namesInput').focus();
+    return;
+  }
+
+  const btn = document.getElementById('checkBtn');
+  const btnText = btn.querySelector('.btn-text');
+  btn.classList.add('loading');
+  btn.disabled = true;
+
+  try {
+    const res = await fetch('/api/check', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ names: input }),
+    });
+
+    if (!res.ok) {
+      const err = await res.json();
+      showToast(err.error || 'Request failed', true);
+      return;
+    }
+
+    const data = await res.json();
+    allResults = data.results;
+    renderSummary(data.summary);
+    renderResults(allResults);
+
+    const resultsSection = document.getElementById('resultsSection');
+    resultsSection.classList.add('visible');
+
+    // Scroll to results with a small delay for animation
+    setTimeout(() => {
+      resultsSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 100);
+
+    // Show success toast
+    showToast(`Successfully checked ${data.summary.total} names in ${data.summary.elapsed_seconds}s`, false);
+
+  } catch (e) {
+    showToast('Network error: ' + e.message, true);
+  } finally {
+    btn.classList.remove('loading');
+    btn.disabled = false;
+  }
+}
+
+// ── Render summary cards ─────────────────────────────
+function renderSummary(s) {
+  const bar = document.getElementById('summaryBar');
+  bar.innerHTML = `
+    <div class="summary-card">
+      <div class="label">Total</div>
+      <div class="value">${s.total}</div>
+    </div>
+    <div class="summary-card">
+      <div class="label">Available</div>
+      <div class="value green">${s.available}</div>
+    </div>
+    <div class="summary-card">
+      <div class="label">Taken</div>
+      <div class="value red">${s.taken}</div>
+    </div>
+    <div class="summary-card">
+      <div class="label">Est. Cost/yr</div>
+      <div class="value cyan">$${s.total_cost_year.toLocaleString()}</div>
+    </div>
+    <div class="summary-card">
+      <div class="label">Check Time</div>
+      <div class="value">${s.elapsed_seconds}s</div>
+    </div>
+  `;
+}
+
+// ── Render result rows ───────────────────────────────
+function renderResults(results) {
+  const list = document.getElementById('resultsList');
+  const filtered = currentFilter === 'all'
+    ? results
+    : currentFilter === 'available'
+      ? results.filter(r => r.available)
+      : results.filter(r => !r.available && r.status !== 'invalid');
+
+  // Update filter tabs with counts
+  updateFilterCounts();
+
+  if (filtered.length === 0) {
+    list.innerHTML = `
+      <div class="empty-state">
+        <div class="empty-state-icon">🔍</div>
+        <div class="empty-state-text">
+          No results found for this filter.<br>
+          Try selecting a different filter option.
+        </div>
+      </div>
+    `;
+    return;
+  }
+
+  list.innerHTML = filtered.map((r, i) => {
+    const status = r.status || 'available';
+    const icon = getIcon(status);
+    const badge = getBadge(status);
+    const meta = buildMeta(r);
+    const price = r.available && r.price ? `<span class="result-price">$${r.price}/yr</span>` : '';
+    const delay = Math.min(i * 0.02, 0.8);
+    const mintBtn = r.available && status !== 'invalid'
+      ? `<a class="btn-mint" href="https://meganame.market/register?name=${encodeURIComponent(r.name)}" target="_blank" rel="noopener" title="Register ${r.name}.mega on meganame.market"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>Mint</a>`
+      : '';
+
+    return `
+      <div class="result-row" style="animation-delay: ${delay}s">
+        <div class="result-icon ${status}">${icon}</div>
+        <div class="result-info">
+          <div class="result-name">${escHtml(r.name)}<span class="tld">.mega</span></div>
+          <div class="result-meta">${meta}</div>
+        </div>
+        <div class="result-right">
+          ${price}
+          ${badge}
+          ${mintBtn}
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+function updateFilterCounts() {
+  const availableCount = allResults.filter(r => r.available).length;
+  const takenCount = allResults.filter(r => !r.available && r.status !== 'invalid').length;
+
+  document.querySelectorAll('.filter-tab').forEach(tab => {
+    const f = tab.dataset.filter;
+    let baseText = tab.textContent.replace(/\s*\(\d+\)/, '').trim();
+
+    // Store original text if not already stored
+    if (!tab.dataset.originalText) {
+      tab.dataset.originalText = baseText;
+    }
+    baseText = tab.dataset.originalText;
+
+    let count = '';
+    if (f === 'available') count = ` (${availableCount})`;
+    if (f === 'taken') count = ` (${takenCount})`;
+    if (f === 'all') count = ` (${allResults.length})`;
+
+    tab.textContent = baseText + count;
+  });
+}
+
+function getIcon(status) {
+  switch (status) {
+    case 'available': return '&#10003;';
+    case 'expired':   return '&#10003;';
+    case 'taken':     return '&#10007;';
+    case 'grace':     return '&#9888;';
+    case 'invalid':   return '!';
+    default:          return '?';
+  }
+}
+
+function getBadge(status) {
+  const labels = {
+    available: 'AVAILABLE',
+    expired:   'RE-REGISTER',
+    taken:     'TAKEN',
+    grace:     'GRACE PERIOD',
+    invalid:   'INVALID',
+  };
+  return `<span class="result-badge badge-${status}">${labels[status] || status.toUpperCase()}</span>`;
+}
+
+function buildMeta(r) {
+  const parts = [];
+  if (r.length) parts.push(`<span>${r.length} char${r.length > 1 ? 's' : ''}</span>`);
+  if (r.owner) parts.push(`<span>owner: ${shortAddr(r.owner)}</span>`);
+  if (r.expires_date) parts.push(`<span>expires: ${r.expires_date}</span>`);
+  if (r.error) parts.push(`<span style="color:var(--yellow)">${escHtml(r.error)}</span>`);
+  return parts.join('');
+}
+
+function shortAddr(a) {
+  if (!a || a === '0x' + '0'.repeat(40)) return '';
+  return a.slice(0, 6) + '...' + a.slice(-4);
+}
+
+function escHtml(s) {
+  const d = document.createElement('div');
+  d.textContent = s;
+  return d.innerHTML;
+}
+
+// ── Filter tabs ──────────────────────────────────────
+function filterResults(filter, el) {
+  currentFilter = filter;
+  document.querySelectorAll('.filter-tab').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+  renderResults(allResults);
+
+  // Update filter tab counts
+  const availableCount = allResults.filter(r => r.available).length;
+  const takenCount = allResults.filter(r => !r.available && r.status !== 'invalid').length;
+
+  document.querySelectorAll('.filter-tab').forEach(tab => {
+    const f = tab.dataset.filter;
+    let count = '';
+    if (f === 'available') count = ` (${availableCount})`;
+    if (f === 'taken') count = ` (${takenCount})`;
+    if (f === 'all') count = ` (${allResults.length})`;
+
+    const baseText = tab.textContent.replace(/\s*\(\d+\)/, '');
+    tab.textContent = baseText + count;
+  });
+}
+
+// ── Toast ────────────────────────────────────────────
+function showToast(msg, isError = false) {
+  const existing = document.querySelector('.toast');
+  if (existing) existing.remove();
+  const toast = document.createElement('div');
+  toast.className = 'toast' + (isError ? '' : ' success');
+  const msgSpan = document.createElement('span');
+  msgSpan.textContent = msg;
+  toast.appendChild(msgSpan);
+  document.body.appendChild(toast);
+  setTimeout(() => {
+    toast.style.opacity = '0';
+    toast.style.transform = 'translateX(100px)';
+    setTimeout(() => toast.remove(), 300);
+  }, 4000);
+}
+
+// ── Keyboard shortcuts ───────────────────────────────
+document.getElementById('namesInput').addEventListener('keydown', function(e) {
+  if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {
+    e.preventDefault();
+    checkNames();
+  }
+});
+
+// Focus input on page load
+window.addEventListener('load', function() {
+  document.getElementById('namesInput').focus();
+});
+
+// ═══════════════════════════════════════════════════════
+//  NAME GENERATOR ENGINE
+// ═══════════════════════════════════════════════════════
+
+// ── Word Banks ────────────────────────────────────────
+const WORDS = {
+  defi: {
+    core: ['defi','swap','yield','farm','pool','stake','vault','lend','borrow','bridge','dex','amm',
+           'liquidity','protocol','dao','compound','synth','perp','margin','flash','loan','collateral',
+           'debt','mint','burn','wrap','lock','claim','harvest','boost','leverage','hedge','rebase',
+           'peg','stablecoin','oracle','fee','reward','emission','epoch','gauge','bribe','vote',
+           'multisig','treasury','reserve','insurance','audit','router','factory','slippage','apr',
+           'apy','tvl','orderbook','limit','aggregate','zap','migrate'],
+    protocols: ['uniswap','aave','compound','curve','maker','yearn','sushi','balancer','synthetix',
+                'dydx','gmx','lido','rocket','eigen','pendle','morpho','euler','radiant','venus',
+                'benqi','camelot','velodrome','aerodrome','maverick','ambient','pancake','raydium',
+                'orca','jupiter','drift','marinade','jito','kamino','marginfi','solend','mango',
+                'hyperlock','thruster','shadow','merkle','vertex','hyperliquid','karak','symbiotic',
+                'renzo','puffer','kelp','etherfi','swell','mantle','stakewise','stader','ankr'],
+    actions: ['swap','stake','farm','lend','borrow','bridge','mint','burn','wrap','lock','claim',
+              'harvest','compound','boost','leverage','hedge','flash','rebase','vote','deposit',
+              'withdraw','supply','repay','liquidate','settle','redeem','convert','zap','migrate']
+  },
+  tokens: {
+    major: ['btc','eth','sol','avax','bnb','matic','dot','atom','ada','xrp','link','uni','aave',
+            'mkr','crv','snx','comp','sushi','yfi','bal','dydx','gmx','ldo','rpl','steth',
+            'wbtc','weth','usdc','usdt','dai','frax','lusd','gho','crvusd','pyusd','usdm'],
+    mid: ['arb','op','mana','sand','axs','gala','imx','enj','ape','blur','magic','pendle','eigen',
+          'strk','zk','manta','sei','sui','apt','inj','tia','dym','jup','jto','pyth','wen','bome',
+          'wif','pepe','bonk','floki','shib','doge','meme','turbo','brett','toshi','degen','higher',
+          'zro','ethfi','ondo','ena','aevo','zeta','omni','ton','dogs','render','kas','tao','fet',
+          'agix','ocean','ar','fil','theta','near','algo','hbar','vet','ftm','one','rose','celo',
+          'flow','mina','icp','ckb','stx','rune','kava','osmo','juno','evmos','astr','glmr'],
+    short: ['eth','btc','sol','bnb','xrp','ada','dot','uni','crv','snx','yfi','bal','ape','gmx',
+            'ldo','arb','sei','sui','apt','inj','jup','jto','wif','zro','ton','tao','kas','fil',
+            'ar','op','zk','io','w','ai']
+  },
+  chains: {
+    names: ['ethereum','bitcoin','solana','avalanche','polygon','arbitrum','optimism','base',
+            'megaeth','linea','scroll','zksync','starknet','manta','blast','mode','mantle','celo',
+            'gnosis','fantom','moonbeam','aurora','metis','cronos','osmosis','cosmos','polkadot',
+            'near','aptos','sui','sei','injective','celestia','berachain','monad','eclipse','fuel',
+            'movement','sonic','abstract','unichain','worldchain','ink','soneium','superchain'],
+    concepts: ['layer1','layer2','l1','l2','rollup','chain','sidechain','appchain','subnet',
+               'shard','bridge','crosschain','interop','multichain','omnichain','sequencer',
+               'prover','validator','node','rpc','explorer','indexer','relayer','consensus']
+  },
+  trading: {
+    terms: ['trade','trader','trading','long','short','bull','bear','pump','dump','moon','rekt',
+            'dip','ath','breakout','support','resistance','trend','volume','candle','chart',
+            'signal','alpha','beta','whale','shark','dolphin','hold','hodl','profit','loss',
+            'roi','pnl','margin','futures','perps','options','spot','arbitrage','scalp','sniper',
+            'bot','algo','quant','hft','dca','grid','copy','mirror','sentiment','fomo','fud',
+            'maxi','degen','ape','leverage','liquidation','funding','spread','slippage'],
+    platforms: ['binance','coinbase','kraken','okx','bybit','bitget','kucoin','gate','mexc',
+                'gemini','robinhood','upbit','bithumb','bitfinex','bitstamp']
+  },
+  nft: {
+    terms: ['nft','pfp','mint','drop','reveal','trait','rarity','floor','sweep','collection',
+            'genesis','og','airdrop','allowlist','raffle','auction','opensea','blur','tensor',
+            'art','pixel','voxel','generative','onchain','dynamic','soulbound','metaverse',
+            'avatar','skin','wearable','land','realm','world','quest','guild','clan','loot'],
+    gaming: ['game','gamer','gaming','play','earn','quest','guild','loot','battle','arena',
+             'pvp','mmorpg','rpg','hero','boss','raid','dungeon','castle','kingdom','empire',
+             'legend','epic','rare','mythic','legendary','champion','master','elite','craft',
+             'forge','enchant','summon','evolve','ascend','prestige','rank','league','season']
+  },
+  meme: {
+    terms: ['pepe','doge','shib','floki','bonk','wif','bome','brett','toshi','turbo','meme',
+            'mog','andy','popcat','neiro','gm','gn','wagmi','ngmi','ser','fren','anon','based',
+            'chad','gigabrain','sigma','vibe','chill','cozy','moon','lambo','rocket','diamond',
+            'degen','ape','yolo','send','pump','rekt','cope','goat','goated','fire','lit',
+            'ratio','frog','cat','dog','bunny','rabbit','penguin','bear','bull','monkey','whale',
+            'fox','wolf','lion','tiger','eagle','dragon','phoenix','unicorn','panda','hamster'],
+    culture: ['hodl','buidl','wagmi','ngmi','gm','gn','lfg','iykyk','wen','alpha','degen',
+              'ape','fren','ser','anon','based','chad','sigma','moon','rekt','fomo','fud',
+              'diamond','whale','pleb','normie','maxi','bear','bull','crab','zoomer','boomer',
+              'touch','grass','cope','seethe','frens','shitpost','intern','gigachad','ngmi']
+  },
+  tech: {
+    ai: ['ai','gpt','llm','agent','neural','deep','learn','train','model','predict',
+         'vector','tensor','diffusion','generate','prompt','token','inference','transformer',
+         'copilot','cortex','synapse','neuron','brain','mind','think','reason','compute',
+         'gpu','quantum','algo','data','depin','iot','sensor','mesh','edge','cloud','infra'],
+    crypto: ['blockchain','crypto','web3','decentralized','trustless','permissionless',
+             'sovereign','custody','zk','zkp','snark','stark','proof','verify','attest',
+             'hash','merkle','state','evm','wasm','solidity','vyper','rust','mpc','fhe',
+             'account','abstraction','passkey','smart','contract','wallet','signer','keystore']
+  },
+  finance: {
+    terms: ['bank','capital','fund','invest','asset','equity','bond','stock','dividend',
+            'yield','interest','rate','collateral','credit','payment','custody','trust',
+            'hedge','index','etf','venture','seed','valuation','market','cap','volume',
+            'forex','commodity','gold','silver','treasury','reserve','monetary','policy'],
+    rwa: ['rwa','tokenize','real','estate','property','land','mortgage','deed','invoice',
+          'factoring','supply','carbon','credit','renewable','energy','solar','battery']
+  }
+};
+
+const PREFIXES = [
+  'mega','super','hyper','ultra','turbo','flash','instant','auto','smart','alpha',
+  'beta','omega','prime','pro','max','plus','mini','micro','nano','meta','neo',
+  'cyber','crypto','defi','onchain','open','zero','one','true','real','pure',
+  'deep','fast','swift','quick','rapid','omni','multi','poly','cross','inter',
+  'next','new','all','my','the','0x','x','go','get','un','re'];
+
+const SUFFIXES = [
+  'fi','swap','dex','dao','hub','lab','pad','verse','chain','net','protocol',
+  'farm','vault','pool','stake','earn','pay','fund','capital','finance','bank',
+  'market','exchange','trade','cash','coin','token','block','node','base',
+  'core','layer','stack','kit','box','zone','space','world','land','city',
+  'run','go','io','ai','x','3','69','420','max','pro','plus','lite',
+  'ify','ize','punk','wave'];
+
+const NUMBERS = ['0','1','2','3','5','7','8','9','10','69','100','123','256',
+                 '314','365','404','420','777','1000','1337','3000','9000'];
+
+// ── Generator Logic ──────────────────────────────────
+
+function getSelectedCategories() {
+  return [...document.querySelectorAll('.gen-cat.active')].map(el => el.dataset.cat);
+}
+
+function getAllWordsForCategories(cats) {
+  const words = new Set();
+  cats.forEach(cat => {
+    const bank = WORDS[cat];
+    if (!bank) return;
+    Object.values(bank).forEach(arr => arr.forEach(w => words.add(w)));
+  });
+  return [...words];
+}
+
+function pick(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
+
+function genSingle(pool)   { return pick(pool); }
+function genCompound(pool)  { const a = pick(pool), b = pick(pool); return a === b ? a + pick(NUMBERS.slice(0,6)) : a + b; }
+function genPrefixed(pool)  { return pick(PREFIXES) + pick(pool); }
+function genSuffixed(pool)  { return pick(pool) + pick(SUFFIXES); }
+function genNumbered(pool)  { return pick(pool) + pick(NUMBERS); }
+function genShort(pool) {
+  const shorts = pool.filter(w => w.length <= 3);
+  if (shorts.length > 0 && Math.random() < 0.6) return pick(shorts);
+  const chars = 'abcdefghijklmnopqrstuvwxyz0123456789';
+  const starts = ['de','fi','ai','nf','zk','lp','0x','go','my','gm','gn','gg',
+                  'og','ez','op','sw','st','cr','br','tr','pr','fl','bl','ex'];
+  const len = Math.random() < 0.3 ? 2 : (Math.random() < 0.5 ? 3 : 4);
+  let name = '';
+  if (len >= 2 && Math.random() < 0.5) {
+    name = pick(starts);
+    for (let i = name.length; i < len; i++) name += chars[Math.floor(Math.random()*chars.length)];
+  } else {
+    for (let i = 0; i < len; i++) name += chars[Math.floor(Math.random()*chars.length)];
+  }
+  return name;
+}
+
+function generateOneName(pool, style) {
+  const generators = { single: genSingle, compound: genCompound, prefix: genPrefixed,
+                       suffix: genSuffixed, numbered: genNumbered, short: genShort };
+  if (style === 'mixed') {
+    const styles = ['single','single','compound','prefix','suffix','numbered','short'];
+    style = pick(styles);
+  }
+  const fn = generators[style] || genSingle;
+  return fn(pool).toLowerCase().replace(/[^a-z0-9-]/g, '');
+}
+
+function generateNames() {
+  const cats = getSelectedCategories();
+  if (cats.length === 0) { showToast('Select at least one category', true); return; }
+
+  const pool = getAllWordsForCategories(cats);
+  const style = document.getElementById('genStyle').value;
+  const count = parseInt(document.getElementById('genCount').value);
+  const maxLen = parseInt(document.getElementById('genMaxLen').value);
+
+  const names = new Set();
+  let attempts = 0;
+  while (names.size < count && attempts < count * 15) {
+    attempts++;
+    const name = generateOneName(pool, style);
+    if (!name || name.length < 1 || name.length > maxLen) continue;
+    if (name.startsWith('-') || name.endsWith('-')) continue;
+    if (!/^[a-z0-9-]+$/.test(name)) continue;
+    names.add(name);
+  }
+
+  const list = [...names];
+
+  // Show preview
+  const preview = document.getElementById('genPreview');
+  preview.innerHTML = list.map(n => `<span class="gen-name">${n}</span>`).join('');
+  preview.classList.add('visible');
+  document.getElementById('genCount2').textContent = `${list.length} names generated`;
+
+  // Fill textarea
+  document.getElementById('namesInput').value = list.join(', ');
+  return list;
+}
+
+function generateAndCheck() {
+  const names = generateNames();
+  if (names && names.length > 0) checkNames();
+}
+
+function clearGenerator() {
+  document.getElementById('genPreview').innerHTML = '';
+  document.getElementById('genPreview').classList.remove('visible');
+  document.getElementById('genCount2').textContent = '';
+  document.getElementById('namesInput').value = '';
+}
+
+// ── Generator UI ─────────────────────────────────────
+function toggleGenerator() {
+  document.getElementById('genPanel').classList.toggle('open');
+  document.getElementById('genBtn').classList.toggle('active');
+}
+
+function toggleCat(el) {
+  el.classList.toggle('active');
+}
+</script>
+
+</body>
+</html>
